@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PublishAuthentication version="1.0">
+	<Authorization>
+		<auth username="admin" password="admin" />
+	</Authorization>
+</PublishAuthentication>

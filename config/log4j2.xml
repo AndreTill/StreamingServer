@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+ 
+    <!-- Logging Properties -->
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1} - %m%n</Property>
+        <Property name="APP_LOG_ROOT">${sys:storm.defaultDirectory}/logs</Property>
+    </Properties>
+     
+    <Appenders>
+     
+        <!-- Console Appender -->
+        <Console name="Console" target="SYSTEM_OUT" follow="true">
+             <PatternLayout disableAnsi="false"  pattern="%highlight{%d{HH:mm:ss} %-5p %c{1} - %m%n}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=white, DEBUG=bright_white bold, TRACE=blue}"/>
+        </Console>
+        
+        <RollingFile name="allLog" fileName="${APP_LOG_ROOT}/log-all.log" filePattern="${APP_LOG_ROOT}/log-all-%d{yyyy-MM-dd}-%i.log" >
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
+         
+        <RollingFile name="warnLog" fileName="${APP_LOG_ROOT}/log-warn.log" filePattern="${APP_LOG_ROOT}/log-warn-%d{yyyy-MM-dd}-%i.log" >
+            <LevelRangeFilter minLevel="WARN" maxLevel="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
+         
+        <RollingFile name="errorLog" fileName="${APP_LOG_ROOT}/log-error.log" filePattern="${APP_LOG_ROOT}/log-error-%d{yyyy-MM-dd}-%i.log" >
+            <LevelRangeFilter minLevel="ERROR" maxLevel="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
+         
+    </Appenders>
+ 
+    <Loggers>
+     
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="allLog"/>
+            <AppenderRef ref="warnLog"/>
+            <AppenderRef ref="errorLog"/>
+        </Root>
+ 
+    </Loggers>
+ 
+</Configuration>

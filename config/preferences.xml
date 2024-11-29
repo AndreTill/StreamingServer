@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Config version="2.0">
+
+	<!--
+		Identification data for of server for clustering and management.
+	-->
+
+	<Identity>
+		<ServerName>Main</ServerName>
+		<GroupName>Default</GroupName>
+		<DefaultDomain>andretill.ru</DefaultDomain>
+	</Identity>
+
+	<!-- 
+		Add your license key here. You can obtain it on stormstreaming.com. You can also use "DEVELOPER", 
+		but in this mode, you'll be restricted to 5 simultaneous streams and 5 viewers total.
+	!-->
+	<License key="DEVELOPER" />
+	<Settings>
+		<!--
+			readerThreads - are responsibile for parsing incoming messages and are shared among all VHosts,
+			transportThreads - should be equal to the max number of simultaneous streams
+			workerThreads - should be equal to max number of viewers
+			senderThreads - threads responsible for sending packets to viewers
+		!-->
+		<ThreadPools>
+			<ReaderThreads>1</ReaderThreads>
+			<WorkerThreads>4</WorkerThreads>
+			<TransportThreads>2</TransportThreads>
+			<WriterThreads>4</WriterThreads>
+		</ThreadPools>
+	</Settings>
+	<!--
+		A virtual host represents a socket on a certain IP & port. You can have multiple sockets open
+		on different addresses/IPs with different protocols assigned to them.
+
+		* For host value you can use either an IP or "*" sign (for localhost).
+		* If SSL is enabled you must provide a path to JKS file and its password.
+		* Available protocols: HTTP, WEBSOCKETS, RTMP (separated by a comma sign, upper-case/lower-case whatever...).
+
+		Example: 
+
+		<VHost host="127.0.0.1" port="443" isSSL="true">
+			<Protocols>WEBSOCKETS, HTTP</Protocols>
+			<Certificate path="/etc/ssl/private/wildcard.acme.com.jks" password="qwerty" />
+		</VHost>
+
+	!-->
+	
+	<VHosts>
+		<VHost host="*" port="1935" isSSL="false">
+			<Protocols>RTMP</Protocols>
+			<Certificate path="${STORM_SSL_CERT_PATH}" password="${STORM_SSL_CERT_PASSWORD}" />
+		</VHost>
+
+		<VHost host="*" port="8080" isSSL="false">
+			<Protocols>WEBSOCKETS, HTTP</Protocols>
+			<Certificate path="${STORM_SSL_CERT_PATH}" password="${STORM_SSL_CERT_PASSWORD}" />
+		</VHost>
+	</VHosts>
+
+	<ClusterManager enabled="false">
+		<Identity>Mother</Identity>
+		<IPWhiteList></IPWhiteList>
+		<Secret>qwerty</Secret>
+	</ClusterManager>
+
+	<!--
+		Applications are separate instances/groups of streams. You can have multiple applications with different settings and features.
+	-->
+	<Applications>
+
+		<Application name="live" type="live">
+
+			<!--
+				Settings for RTMP Controller:
+
+				- AllowStreamPublish:
+					* true (publishing to this app is possible)
+					* false (publishing is not allowed)
+
+				- AllowStreamOverwrite:
+					* true (a stream can be overwritten)
+					* false (no, overwriting is not possible)
+					* sameIPOnly (only the same IP can overwrite a stream)
+
+				- KeepClientStreamsAlive:
+					* true (keeps RTMP Client-based streams even if there are no viewers)
+					* false (if there are no viewers RTMP-based clent streams will be closed)
+
+				- AllowClientPlayback:
+					* true (RTMP Clients can connect to this app to play a stream)
+					* false (RTMP Clients are not allowed to connect to play a stream)
+
+				- Authentication
+					-> enabled (whenever authentication is enabled, if not, anyone can publish a stream)
+					-> method:
+						* token (with items in the list below e.g. <auth token="12345678" />)
+						* adobe (with items in the list below e.g. <auth username="test" password="qwerty" />)
+
+					-> sourceType:
+						* global (request to a local server xml file, check auth_publish.xml for reference)
+						* local (local element e.g. <auth username="admin1" password="admin2" />)
+
+					-> sourceTarget (it's either a link to a local file or http request)
+
+										<RequestURL>https://mydomain.com</RequestURL>
+					<Secret>qwertyu</Secret>
+
+
+			-->
+			<RTMPController>
+				<AllowStreamPublish>true</AllowStreamPublish>
+				<AllowStreamOverwrite>true</AllowStreamOverwrite>
+				<AllowClientPlayback>true</AllowClientPlayback>
+				<AutoPublishStream>true</AutoPublishStream>
+				<KeepClientStreamsAlive>true</KeepClientStreamsAlive>
+				<PlaybackAuthRequired>false</PlaybackAuthRequired>
+				<Authorization enabled="false" type="managed">
+					<auth username="test" password="qwerty" />
+				</Authorization>
+			</RTMPController>
+
+			<SecureStream enabled="false">
+				<Password>qwerty</Password>
+				<CheckViewerIP>true</CheckViewerIP>
+				<TokenLifespan>10</TokenLifespan>
+			</SecureStream>
+
+			<LiveTranscoding enabled="true">
+				<Preset name="360p" />
+			</LiveTranscoding>
+
+			<!--
+				Settings for MP4 Muxer:
+
+				- VariableFPS: 
+					* false (FPS should be static, no compensation)
+					* true (FPS might be variable, e.g. from WebRTC source)
+					* auto (server will try to figure it out on its own)
+
+				- KeyFrameCompensation: 
+					* false (no compenstation for h.264)
+					* true (compenstation for missing h.264 frames)
+			-->
+			<MP4MuxerSettings>
+				<VariableFPS>true</VariableFPS>
+				<KeyFrameCompensation>false</KeyFrameCompensation>
+			</MP4MuxerSettings>
+
+			<!--
+				Settings for caching stream (seeking)
+				cacheSize
+			-->
+			<DVRSettings enabled="false">
+				<CacheSize>100</CacheSize>
+			</DVRSettings>
+			
+			<!--
+				Settings for saving streams to a file
+				- SavePath: path to a directory
+				- CacheSize: cache size in MB
+			-->
+			<RecordingSettings enabled="true">
+				<SavePath>/srv/live/</SavePath>
+				<CacheSize>10</CacheSize>
+				<MaxStorageSize>25000</MaxStorageSize>
+				<RemoveOldFiles>true</RemoveOldFiles>
+			</RecordingSettings>
+
+ 		</Application>
+
+	</Applications>
+	<!--
+		If you wish to use REST API, you must authorize your requests.
+		You can do this using both IP Whitelist and username/password
+		approach. If IPWhiteList is empty, an IP won't be checked.
+	-->
+	<REST>
+		<IPWhiteList>127.0.0.1</IPWhiteList>
+		<Authorization>
+			<auth username="admin" password="admin" />
+		</Authorization>
+	</REST>
+	<!-- 
+		In a similar fashion to REST API, you must authenticate your
+		requests to the Control Panel. If IPWhiteListIP is left
+		blank, IPs simply won't be checked.
+	-->
+	<ControlPanel>
+		<IPWhiteList></IPWhiteList>
+		<Authorization>
+			<auth username="admin" password="admin" />
+		</Authorization>
+	</ControlPanel>
+
+	<!-- Advanced settings -->
+	<AdvancedSettings>
+		<NaglesAlgorithm>true</NaglesAlgorithm>
+		<ReuseAddresses>true</ReuseAddresses>
+	</AdvancedSettings>
+
+	<!-- Transcoder settings
+
+		-re -nostdin -i ${SOURCE_INPUT} -vcodec libx264 -preset:v ${CPU_USAGE_PRESET} -vf scale=${OUTPUT_WIDTH}:${OUTPUT_HEIGHT} -tune ${TUNE} -g 30 -fflags nobuffer -acodec aac -async 1 -f flv ${STREAM_OUTPUT}
+
+		Parameters:
+			${SOURCE_INPUT} - path to the stream within the server
+			${STREAM_OUTPUT} - output path 
+			${CPU_USAGE_PRESET} - CPU Usage Preset (CPUUsagePreset)
+			${OUTPUT_WIDTH} - transcoded stream video width (Resolution->width)
+			${OUTPUT_HEIGHT} - transcoded stream video height (Resolution->height)
+			${TUNE} - ffmpeg tune (Tune)
+
+	-->
+	<Transcoder>
+		<FFMPEG>
+			<Path>/usr/bin/ffmpeg</Path>
+			<Command>-re -nostdin -i ${SOURCE_INPUT} -vcodec libx264 -preset:v ${CPU_USAGE_PRESET} -vf scale=${OUTPUT_WIDTH}:${OUTPUT_HEIGHT} -tune ${TUNE} -g 30 -fflags nobuffer -acodec aac -async 1 -f flv ${STREAM_OUTPUT}</Command>
+		</FFMPEG>
+		<PresetList>
+			<Preset name="360p" suffix="_360p">
+				<Resolution height="360" />
+				<Bitrate video="1500" audio="50" />
+				<KeyFrameInterval>1</KeyFrameInterval>
+				<CPUUsagePreset>ultrafast</CPUUsagePreset>
+				<Profile>main</Profile>
+				<Tune>zerolatency</Tune>
+			</Preset>
+		</PresetList>
+	</Transcoder>
+
+	<!--
+		Additional settings
+
+		Sample:
+
+		<Parameter name="foo" value="fighters" />
+
+	-->
+	<AdditionalParameters>
+		<Parameter name="loadAnalyseInterval" value="5" />
+		<Parameter name="loadProbeInterval" value="2" />
+	</AdditionalParameters>
+</Config>

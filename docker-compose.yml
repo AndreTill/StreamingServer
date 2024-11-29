@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  storm:
+    image: stormstreaming/storm-streaming-server:latest
+    environment:
+      STORM_LICENSE_KEY: "DEVELOPER"
+      STORM_SERVER_NAME: "Main"
+      STORM_ADMIN_USERNAME: "admin"
+      STORM_ADMIN_PASSWORD: "admin"
+      JAVA_XMX_VALUE: "3g"
+      JAVA_XMS_VALUE: "3g"
+    ports:
+      - "8080:8080"
+      - "1935:1935"
+    volumes:
+      - /etc/ssl/private:/etc/ssl
+      - /var/logs/storm/log:/srv/storm/log
+      - /srv/storm/config:/srv/storm/config
+      - /srv/live:/srv/live
