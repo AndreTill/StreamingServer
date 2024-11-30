@@ -16,4 +16,4 @@ services:
       - /etc/ssl/private:/etc/ssl
       - /var/logs/storm/log:/srv/storm/log
       - /srv/storm/config:/srv/storm/config
-      - /srv/live:/srv/live
+      - /srv/storm/live:/srv/live
